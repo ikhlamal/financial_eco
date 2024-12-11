@@ -1,0 +1,11 @@
+customer_id,transaction_history,credit_score,loan_amount,loan_terms,transaction_status
+1,"{""pembayaran"": 500, ""pinjaman"": 1000}",720,5000,"5%, 12 months",Approved
+2,"{""pembayaran"": 300, ""pinjaman"": 2000}",650,3000,"6%, 24 months",Pending
+3,"{""pembayaran"": 800, ""pinjaman"": 5000}",800,10000,"4%, 36 months",Approved
+4,"{""pembayaran"": 150, ""pinjaman"": 800}",620,2000,"7%, 18 months",Denied
+5,"{""pembayaran"": 1000, ""pinjaman"": 3000}",730,7000,"4%, 12 months",Approved
+6,"{""pembayaran"": 200, ""pinjaman"": 500}",680,1500,"5%, 24 months",Pending
+7,"{""pembayaran"": 600, ""pinjaman"": 1200}",690,4000,"5%, 36 months",Approved
+8,"{""pembayaran"": 100, ""pinjaman"": 300}",600,1000,"6%, 12 months",Denied
+9,"{""pembayaran"": 900, ""pinjaman"": 6000}",750,15000,"3%, 24 months",Approved
+10,"{""pembayaran"": 250, ""pinjaman"": 1500}",670,3500,"6%, 18 months",Pending
