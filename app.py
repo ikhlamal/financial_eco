@@ -1,10 +1,43 @@
 import streamlit as st
 import pandas as pd
+import random
 
 # Load Data
 @st.cache
 def load_data(file_path):
     return pd.read_csv(file_path)
+
+# Define Agents
+class CreditScoringAgent:
+    def __init__(self, credit_scores):
+        self.credit_scores = credit_scores
+
+    def get_credit_score(self, customer_id):
+        customer_data = self.credit_scores[self.credit_scores['CustomerID'] == customer_id]
+        if not customer_data.empty:
+            return customer_data['CreditScore'].values[0]
+        return None
+
+class TransactionAgent:
+    def __init__(self, transactions):
+        self.transactions = transactions
+
+    def record_transaction(self, sender, receiver, amount):
+        transaction_id = len(self.transactions) + 1
+        new_transaction = {
+            "TransactionID": transaction_id,
+            "Sender": sender,
+            "Receiver": receiver,
+            "Amount": amount
+        }
+        self.transactions = self.transactions.append(new_transaction, ignore_index=True)
+        return new_transaction
+
+class NegotiationAgent:
+    def negotiate_interest_rate(self, credit_score):
+        base_rate = 5
+        discount = credit_score // 100
+        return max(base_rate - discount, 1)
 
 # Load CSV files
 def main():
@@ -21,6 +54,11 @@ def main():
     companies = load_data(companies_file)
     transactions = load_data(transactions_file)
     credit_scores = load_data(credit_scores_file)
+
+    # Initialize Agents
+    credit_agent = CreditScoringAgent(credit_scores)
+    transaction_agent = TransactionAgent(transactions)
+    negotiation_agent = NegotiationAgent()
 
     if page == "Home":
         st.header("Overview")
@@ -53,23 +91,21 @@ def main():
         customer_id = st.text_input("Enter Customer ID", "C001")
         st.write("Fetching data for customer:", customer_id)
 
-        # Filter data
-        customer_data = credit_scores[credit_scores['CustomerID'] == customer_id]
+        credit_score = credit_agent.get_credit_score(customer_id)
 
-        if not customer_data.empty:
-            st.write("Credit Score:", customer_data['CreditScore'].values[0])
+        if credit_score is not None:
+            st.write("Credit Score:", credit_score)
 
             # Simulate Loan Negotiation
             st.subheader("Loan Negotiation")
             amount = st.slider("Loan Amount", 1000, 100000, step=500)
-            credit_score = customer_data['CreditScore'].values[0]
-
-            # Calculate interest rate based on credit score
-            interest_rate = max(5 - (credit_score // 100), 1)
+            interest_rate = negotiation_agent.negotiate_interest_rate(credit_score)
             st.write("Proposed Interest Rate:", interest_rate, "%")
 
             if st.button("Submit Loan Request"):
-                st.success("Loan request submitted with interest rate {}%".format(interest_rate))
+                transaction = transaction_agent.record_transaction("Customer", "Bank", amount)
+                st.success(f"Loan request submitted with interest rate {interest_rate}%")
+                st.write("Transaction Details:", transaction)
         else:
             st.error("No data found for the specified customer ID.")
 
