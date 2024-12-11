@@ -2,112 +2,74 @@ import streamlit as st
 import pandas as pd
 import random
 
-# Load Data
+# Load data from CSV files
+st.title("Sistem Multiagen Cerdas untuk Ekosistem Keuangan Terintegrasi")
+st.sidebar.title("Navigasi")
+menu = st.sidebar.radio("Pilih Menu", ["Dashboard", "Simulasi Agen"])
+
+# Load databases
 @st.cache_data
-def load_data(file_path):
-    return pd.read_csv(file_path)
+def load_data():
+    customers = pd.read_csv("customers.csv")  # Data pelanggan
+    transactions = pd.read_csv("transactions.csv")  # Data transaksi
+    return customers, transactions
 
-# Define Agents
-class CreditScoringAgent:
-    def __init__(self, credit_scores):
-        self.credit_scores = credit_scores
+customers, transactions = load_data()
 
-    def get_credit_score(self, customer_id):
-        customer_data = self.credit_scores[self.credit_scores['CustomerID'] == customer_id]
-        if not customer_data.empty:
-            return customer_data['CreditScore'].values[0]
-        return None
+if menu == "Dashboard":
+    st.header("Dashboard Ekosistem Keuangan")
 
-class TransactionAgent:
-    def __init__(self, transactions):
-        self.transactions = transactions
+    st.subheader("Data Pelanggan")
+    st.dataframe(customers)
 
-    def record_transaction(self, sender, receiver, amount):
-        transaction_id = len(self.transactions) + 1
-        new_transaction = {
-            "TransactionID": transaction_id,
-            "Sender": sender,
-            "Receiver": receiver,
-            "Amount": amount
-        }
-        self.transactions = self.transactions.append(new_transaction, ignore_index=True)
-        return new_transaction
+    st.subheader("Data Transaksi")
+    st.dataframe(transactions)
 
-class NegotiationAgent:
-    def negotiate_interest_rate(self, credit_score):
-        base_rate = 5
-        discount = credit_score // 100
-        return max(base_rate - discount, 1)
+elif menu == "Simulasi Agen":
+    st.header("Simulasi Agen Cerdas")
 
-# Load CSV files
-def main():
-    st.title("Intelligent Multi-Agent System in Integrated Financial Ecosystem")
+    # Simulasi Penilaian Kredit
+    st.subheader("1. Penilaian Kredit")
+    
+    def evaluate_credit_score(customer_data):
+        """Fungsi sederhana untuk menghitung skor kredit berdasarkan data pelanggan."""
+        return random.randint(300, 850)  # Simulasi nilai kredit
 
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Home", "Agents Overview", "Transactions", "Simulation"])
+    customers["Credit_Score"] = customers.apply(evaluate_credit_score, axis=1)
+    st.dataframe(customers[["Customer_ID", "Name", "Credit_Score"]])
 
-    # Load CSVs
-    companies_file = "companies.csv"
-    transactions_file = "transactions.csv"
-    credit_scores_file = "credit_scores.csv"
-
-    companies = load_data(companies_file)
-    transactions = load_data(transactions_file)
-    credit_scores = load_data(credit_scores_file)
-
-    # Initialize Agents
-    credit_agent = CreditScoringAgent(credit_scores)
-    transaction_agent = TransactionAgent(transactions)
-    negotiation_agent = NegotiationAgent()
-
-    if page == "Home":
-        st.header("Overview")
-        st.write("This application demonstrates an intelligent multi-agent system used in an integrated financial ecosystem.")
-        st.write("""
-            Key Features:
-            - Collaborative decision-making between financial institutions.
-            - Credit scoring using AI.
-            - Transaction management via coordinated agents.
-        """)
-
-    elif page == "Agents Overview":
-        st.header("Agents Overview")
-        st.subheader("Companies")
-        st.write("List of companies involved in the ecosystem:")
-        st.dataframe(companies)
-
-        st.subheader("Credit Scores")
-        st.write("Credit scores of individuals and entities:")
-        st.dataframe(credit_scores)
-
-    elif page == "Transactions":
-        st.header("Transactions")
-        st.write("Transactions managed by agents:")
-        st.dataframe(transactions)
-
-    elif page == "Simulation":
-        st.header("Simulation")
-
-        customer_id = st.text_input("Enter Customer ID", "C001")
-        st.write("Fetching data for customer:", customer_id)
-
-        credit_score = credit_agent.get_credit_score(customer_id)
-
-        if credit_score is not None:
-            st.write("Credit Score:", credit_score)
-
-            # Simulate Loan Negotiation
-            st.subheader("Loan Negotiation")
-            amount = st.slider("Loan Amount", 1000, 100000, step=500)
-            interest_rate = negotiation_agent.negotiate_interest_rate(credit_score)
-            st.write("Proposed Interest Rate:", interest_rate, "%")
-
-            if st.button("Submit Loan Request"):
-                transaction = transaction_agent.record_transaction("Customer", "Bank", amount)
-                st.success(f"Loan request submitted with interest rate {interest_rate}%")
-                st.write("Transaction Details:", transaction)
+    # Simulasi Negosiasi Pinjaman
+    st.subheader("2. Negosiasi Pinjaman")
+    def negotiate_loan(credit_score):
+        """Menentukan jumlah pinjaman dan suku bunga berdasarkan skor kredit."""
+        if credit_score >= 750:
+            return "Low Interest", random.randint(5000, 20000)
+        elif 600 <= credit_score < 750:
+            return "Medium Interest", random.randint(3000, 10000)
         else:
-            st.error("No data found for the specified customer ID.")
+            return "High Interest", random.randint(1000, 5000)
 
-if __name__ == "__main__":
-    main()
+    customers[["Loan_Type", "Loan_Amount"]] = customers["Credit_Score"].apply(
+        lambda x: pd.Series(negotiate_loan(x))
+    )
+    st.dataframe(customers[["Customer_ID", "Name", "Loan_Type", "Loan_Amount"]])
+
+    # Simulasi Koordinasi Transaksi
+    st.subheader("3. Koordinasi Transaksi")
+    def process_transaction(transaction):
+        """Memproses transaksi berdasarkan data pelanggan."""
+        customer_id = transaction["Customer_ID"]
+        customer = customers[customers["Customer_ID"] == customer_id]
+        if not customer.empty:
+            credit_score = customer.iloc[0]["Credit_Score"]
+            return "Approved" if credit_score > 650 else "Denied"
+        return "Invalid"
+
+    transactions["Status"] = transactions.apply(process_transaction, axis=1)
+    st.dataframe(transactions)
+
+# Simpan data jika diubah
+if st.button("Simpan Perubahan"):
+    customers.to_csv("customers_updated.csv", index=False)
+    transactions.to_csv("transactions_updated.csv", index=False)
+    st.success("Data berhasil disimpan!")
