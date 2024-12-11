@@ -50,50 +50,37 @@ customer_id = st.selectbox("Pilih ID Pelanggan untuk Simulasi", data['customer_i
 # Find the selected customer data
 customer_data = data[data['customer_id'] == customer_id].iloc[0]
 
-# Tampilkan subjudul dengan gaya yang lebih menarik
-st.subheader(f"🔍 Informasi Pelanggan {customer_id}")
-st.markdown(
-    f"""
-    <div style="background-color: #f1f1f1; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <h5><strong>Riwayat Transaksi</strong></h5>
-        <p>{customer_data['transaction_history']}</p>
-        
-        <h5><strong>Jumlah Pinjaman</strong></h5>
-        <p><strong>IDR {customer_data['loan_amount']}</strong></p>
+# Show selected customer information with better formatting
+st.subheader(f"Informasi Pelanggan {customer_id}")
 
-        <h5><strong>Skor Kredit</strong></h5>
-        <p>{customer_data['credit_score']}</p>
+# Using markdown for better structure
+st.markdown(f"**Riwayat Transaksi:** {customer_data['transaction_history']}")
+st.markdown(f"**Jumlah Pinjaman:** {customer_data['loan_amount']}")
+st.markdown(f"**Skor Kredit:** {customer_data['credit_score']}")
+st.markdown(f"**Syarat Pinjaman:** {customer_data['loan_terms']}")
+st.markdown(f"**Status Transaksi:** {customer_data['transaction_status']}")
 
-        <h5><strong>Syarat Pinjaman</strong></h5>
-        <p>{customer_data['loan_terms']}</p>
-
-        <h5><strong>Status Transaksi</strong></h5>
-        <p>{customer_data['transaction_status']}</p>
-    </div>
-    """, unsafe_allow_html=True
-)
-
-# Jalankan logika agen
+# Run the agent logic
 credit_score, status = credit_score_assessment(customer_data['customer_id'], customer_data['transaction_history'])
 loan_terms = loan_negotiation(credit_score, customer_data['loan_amount'])
 transaction_status = process_transaction(customer_data['loan_amount'], loan_terms, status)
 
-# Tampilkan hasil dengan format lebih menarik
-st.subheader("💡 Hasil Penilaian dan Transaksi")
-st.markdown(
-    f"""
-    <div style="background-color: #e9f7f6; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <h5><strong>Skor Kredit yang Dihasilkan oleh Agen</strong></h5>
-        <p>{credit_score}</p>
+# Display agent results with enhanced formatting
+st.subheader("Hasil Penilaian dan Transaksi")
 
-        <h5><strong>Status Kredit</strong></h5>
-        <p>{status}</p>
+# Create a table to show the results
+result_data = {
+    "Skor Kredit yang Dihasilkan oleh Agen": [credit_score],
+    "Status Kredit": [status],
+    "Syarat Pinjaman yang Dinegosiasikan": [loan_terms],
+    "Status Transaksi": [transaction_status]
+}
+result_df = pd.DataFrame(result_data)
 
-        <h5><strong>Syarat Pinjaman yang Dinegosiasikan</strong></h5>
-        <p>{loan_terms}</p>
+st.table(result_df)  # Show the results in a table for better visualization
 
-        <h5><strong>Status Transaksi</strong></h5>
-        <p>{transaction_status}</p>
-    </div>
-    """, unsafe_allow_html=True
-)
+# Optionally, use a different color or layout for the status (approved/denied)
+if status == "Approved":
+    st.markdown('<p style="color: green;">Transaksi Disetujui!</p>', unsafe_allow_html=True)
+else:
+    st.markdown('<p style="color: red;">Transaksi Ditolak!</p>', unsafe_allow_html=True)
