@@ -50,22 +50,50 @@ customer_id = st.selectbox("Pilih ID Pelanggan untuk Simulasi", data['customer_i
 # Find the selected customer data
 customer_data = data[data['customer_id'] == customer_id].iloc[0]
 
-# Show selected customer information
-st.subheader(f"Informasi Pelanggan {customer_id}")
-st.write(f"Riwayat Transaksi: {customer_data['transaction_history']}")
-st.write(f"Jumlah Pinjaman: {customer_data['loan_amount']}")
-st.write(f"Skor Kredit: {customer_data['credit_score']}")
-st.write(f"Syarat Pinjaman: {customer_data['loan_terms']}")
-st.write(f"Status Transaksi: {customer_data['transaction_status']}")
+# Tampilkan subjudul dengan gaya yang lebih menarik
+st.subheader(f"🔍 Informasi Pelanggan {customer_id}")
+st.markdown(
+    f"""
+    <div style="background-color: #f1f1f1; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h5><strong>Riwayat Transaksi</strong></h5>
+        <p>{customer_data['transaction_history']}</p>
+        
+        <h5><strong>Jumlah Pinjaman</strong></h5>
+        <p><strong>IDR {customer_data['loan_amount']}</strong></p>
 
-# Run the agent logic
+        <h5><strong>Skor Kredit</strong></h5>
+        <p>{customer_data['credit_score']}</p>
+
+        <h5><strong>Syarat Pinjaman</strong></h5>
+        <p>{customer_data['loan_terms']}</p>
+
+        <h5><strong>Status Transaksi</strong></h5>
+        <p>{customer_data['transaction_status']}</p>
+    </div>
+    """, unsafe_allow_html=True
+)
+
+# Jalankan logika agen
 credit_score, status = credit_score_assessment(customer_data['customer_id'], customer_data['transaction_history'])
 loan_terms = loan_negotiation(credit_score, customer_data['loan_amount'])
 transaction_status = process_transaction(customer_data['loan_amount'], loan_terms, status)
 
-# Show the result of agent actions
-st.subheader("Hasil Penilaian dan Transaksi")
-st.write(f"Skor Kredit yang Dihasilkan oleh Agen: {credit_score}")
-st.write(f"Status Kredit: {status}")
-st.write(f"Syarat Pinjaman yang Dinegosiasikan: {loan_terms}")
-st.write(f"Status Transaksi: {transaction_status}")
+# Tampilkan hasil dengan format lebih menarik
+st.subheader("💡 Hasil Penilaian dan Transaksi")
+st.markdown(
+    f"""
+    <div style="background-color: #e9f7f6; padding: 10px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h5><strong>Skor Kredit yang Dihasilkan oleh Agen</strong></h5>
+        <p>{credit_score}</p>
+
+        <h5><strong>Status Kredit</strong></h5>
+        <p>{status}</p>
+
+        <h5><strong>Syarat Pinjaman yang Dinegosiasikan</strong></h5>
+        <p>{loan_terms}</p>
+
+        <h5><strong>Status Transaksi</strong></h5>
+        <p>{transaction_status}</p>
+    </div>
+    """, unsafe_allow_html=True
+)
