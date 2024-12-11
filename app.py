@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # Inisialisasi database
 Base = declarative_base()
-engine = create_engine('sqlite:///financial_ecosystem.db', echo=True)
+engine = create_engine('sqlite:///financial_eco.db', echo=True)
 
 # Definisikan tabel-tabel
 class Company(Base):
