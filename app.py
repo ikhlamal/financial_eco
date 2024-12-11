@@ -1,75 +1,71 @@
 import streamlit as st
 import pandas as pd
-import random
+import json
 
-# Load data from CSV files
-st.title("Sistem Multiagen Cerdas untuk Ekosistem Keuangan Terintegrasi")
-st.sidebar.title("Navigasi")
-menu = st.sidebar.radio("Pilih Menu", ["Dashboard", "Simulasi Agen"])
-
-# Load databases
-@st.cache_data
+# Load the data from CSV
 def load_data():
-    customers = pd.read_csv("customers.csv")  # Data pelanggan
-    transactions = pd.read_csv("transactions.csv")  # Data transaksi
-    return customers, transactions
+    data = pd.read_csv('financial_data.csv')
+    return data
 
-customers, transactions = load_data()
+# Agen Penilaian Kredit: Fungsi untuk menghitung skor kredit dan memberikan status kredit
+def credit_score_assessment(customer_id, transaction_history):
+    # Misalnya kita menggunakan aturan sederhana untuk penilaian kredit
+    transaction_data = json.loads(transaction_history)
+    total_transactions = sum(transaction_data.values())  # Menjumlahkan transaksi
+    if total_transactions > 1000:
+        credit_score = 750
+        status = "Approved"
+    else:
+        credit_score = 650
+        status = "Denied"
+    return credit_score, status
 
-if menu == "Dashboard":
-    st.header("Dashboard Ekosistem Keuangan")
+# Agen Negosiasi Pinjaman: Fungsi untuk menentukan syarat pinjaman
+def loan_negotiation(credit_score, loan_amount):
+    if credit_score > 700:
+        loan_terms = f"3%, {loan_amount // 1000} months"
+    else:
+        loan_terms = f"5%, {loan_amount // 500} months"
+    return loan_terms
 
-    st.subheader("Data Pelanggan")
-    st.dataframe(customers)
+# Agen Koordinasi Transaksi: Fungsi untuk memproses transaksi
+def process_transaction(loan_amount, loan_terms, status):
+    if status == "Approved":
+        transaction_status = "Transaction Successful"
+    else:
+        transaction_status = "Transaction Denied"
+    return transaction_status
 
-    st.subheader("Data Transaksi")
-    st.dataframe(transactions)
+# Streamlit interface
+st.title("Multi-Agent System: Integrated Financial Ecosystem")
 
-elif menu == "Simulasi Agen":
-    st.header("Simulasi Agen Cerdas")
+# Load the data
+data = load_data()
+st.subheader("Data Keuangan Pelanggan")
+st.write(data)
 
-    # Simulasi Penilaian Kredit
-    st.subheader("1. Penilaian Kredit")
-    
-    def evaluate_credit_score(customer_data):
-        """Fungsi sederhana untuk menghitung skor kredit berdasarkan data pelanggan."""
-        return random.randint(300, 850)  # Simulasi nilai kredit
+# Select customer to simulate agent system
+customer_id = st.selectbox("Pilih ID Pelanggan untuk Simulasi", data['customer_id'])
 
-    customers["Credit_Score"] = customers.apply(evaluate_credit_score, axis=1)
-    st.dataframe(customers[["Customer_ID", "Name", "Credit_Score"]])
+# Find the selected customer data
+customer_data = data[data['customer_id'] == customer_id].iloc[0]
 
-    # Simulasi Negosiasi Pinjaman
-    st.subheader("2. Negosiasi Pinjaman")
-    def negotiate_loan(credit_score):
-        """Menentukan jumlah pinjaman dan suku bunga berdasarkan skor kredit."""
-        if credit_score >= 750:
-            return "Low Interest", random.randint(5000, 20000)
-        elif 600 <= credit_score < 750:
-            return "Medium Interest", random.randint(3000, 10000)
-        else:
-            return "High Interest", random.randint(1000, 5000)
+# Show selected customer information
+st.subheader(f"Informasi Pelanggan {customer_id}")
+st.write(f"Riwayat Transaksi: {customer_data['transaction_history']}")
+st.write(f"Jumlah Pinjaman: {customer_data['loan_amount']}")
+st.write(f"Skor Kredit: {customer_data['credit_score']}")
+st.write(f"Syarat Pinjaman: {customer_data['loan_terms']}")
+st.write(f"Status Transaksi: {customer_data['transaction_status']}")
 
-    customers[["Loan_Type", "Loan_Amount"]] = customers["Credit_Score"].apply(
-        lambda x: pd.Series(negotiate_loan(x))
-    )
-    st.dataframe(customers[["Customer_ID", "Name", "Loan_Type", "Loan_Amount"]])
+# Run the agent logic
+credit_score, status = credit_score_assessment(customer_data['customer_id'], customer_data['transaction_history'])
+loan_terms = loan_negotiation(credit_score, customer_data['loan_amount'])
+transaction_status = process_transaction(customer_data['loan_amount'], loan_terms, status)
 
-    # Simulasi Koordinasi Transaksi
-    st.subheader("3. Koordinasi Transaksi")
-    def process_transaction(transaction):
-        """Memproses transaksi berdasarkan data pelanggan."""
-        customer_id = transaction["Customer_ID"]
-        customer = customers[customers["Customer_ID"] == customer_id]
-        if not customer.empty:
-            credit_score = customer.iloc[0]["Credit_Score"]
-            return "Approved" if credit_score > 650 else "Denied"
-        return "Invalid"
-
-    transactions["Status"] = transactions.apply(process_transaction, axis=1)
-    st.dataframe(transactions)
-
-# Simpan data jika diubah
-if st.button("Simpan Perubahan"):
-    customers.to_csv("customers_updated.csv", index=False)
-    transactions.to_csv("transactions_updated.csv", index=False)
-    st.success("Data berhasil disimpan!")
+# Show the result of agent actions
+st.subheader("Hasil Penilaian dan Transaksi")
+st.write(f"Skor Kredit yang Dihasilkan oleh Agen: {credit_score}")
+st.write(f"Status Kredit: {status}")
+st.write(f"Syarat Pinjaman yang Dinegosiasikan: {loan_terms}")
+st.write(f"Status Transaksi: {transaction_status}")
