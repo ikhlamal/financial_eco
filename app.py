@@ -1,76 +1,77 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 
-# Fungsi untuk memuat data
+# Load Data
 @st.cache
-def load_data(file_name):
-    return pd.read_csv(file_name)
+def load_data(file_path):
+    return pd.read_csv(file_path)
 
-# Header aplikasi
-st.title("Sistem Multiagen Cerdas dalam Ekosistem Keuangan Terintegrasi")
+# Load CSV files
+def main():
+    st.title("Intelligent Multi-Agent System in Integrated Financial Ecosystem")
 
-# Sidebar
-st.sidebar.header("Navigasi")
-menu = st.sidebar.selectbox("Pilih Menu", ["Home", "Data Agen", "Data Transaksi", "Simulasi Agen Cerdas"])
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ["Home", "Agents Overview", "Transactions", "Simulation"])
 
-# Home Page
-if menu == "Home":
-    st.header("Selamat Datang!")
-    st.write(
-        """
-        Aplikasi ini mengilustrasikan bagaimana agen-agen cerdas bekerja dalam ekosistem keuangan yang terintegrasi. 
-        Setiap agen memiliki tugas spesifik, seperti menilai kredit, bernegosiasi pinjaman, dan mengelola transaksi keuangan.
-        """
-    )
-    st.image("https://via.placeholder.com/800x400", caption="Arsitektur Sistem Multiagen")
+    # Load CSVs
+    companies_file = "companies.csv"
+    transactions_file = "transactions.csv"
+    credit_scores_file = "credit_scores.csv"
 
-# Data Agen Page
-elif menu == "Data Agen":
-    st.header("Data Agen Cerdas")
-    st.write("Berikut adalah daftar agen cerdas dalam sistem:")
-    data_agen = {
-        "Agen": ["Agen Penilaian Kredit", "Agen Negosiasi", "Agen Koordinasi Transaksi"],
-        "Fitur": [
-            "Menilai skor kredit pelanggan berdasarkan data historis.",
-            "Bernegosiasi suku bunga dan jumlah pinjaman.",
-            "Mengelola transaksi antar pihak."
-        ],
-        "Teknologi": ["Machine Learning", "Reinforcement Learning", "Blockchain"],
-    }
-    df_agen = pd.DataFrame(data_agen)
-    st.table(df_agen)
+    companies = load_data(companies_file)
+    transactions = load_data(transactions_file)
+    credit_scores = load_data(credit_scores_file)
 
-# Data Transaksi Page
-elif menu == "Data Transaksi":
-    st.header("Data Transaksi Keuangan")
-    st.write("Berikut adalah data transaksi yang dikelola agen:")
-    uploaded_file = st.file_uploader("Upload File CSV Transaksi", type=["csv"])
-    if uploaded_file is not None:
-        data_transaksi = load_data(uploaded_file)
-        st.dataframe(data_transaksi)
-    else:
-        st.write("Silakan unggah file CSV untuk melihat data transaksi.")
+    if page == "Home":
+        st.header("Overview")
+        st.write("This application demonstrates an intelligent multi-agent system used in an integrated financial ecosystem.")
+        st.write("""
+            Key Features:
+            - Collaborative decision-making between financial institutions.
+            - Credit scoring using AI.
+            - Transaction management via coordinated agents.
+        """)
 
-# Simulasi Agen Cerdas Page
-elif menu == "Simulasi Agen Cerdas":
-    st.header("Simulasi Agen Cerdas")
-    st.write("Simulasi bagaimana agen-agen bekerja untuk menyelesaikan tugas mereka.")
+    elif page == "Agents Overview":
+        st.header("Agents Overview")
+        st.subheader("Companies")
+        st.write("List of companies involved in the ecosystem:")
+        st.dataframe(companies)
 
-    # Input Data Simulasi
-    skor_kredit = st.number_input("Masukkan Skor Kredit Pelanggan:", min_value=0, max_value=1000, value=750)
-    kebutuhan_pinjaman = st.number_input("Masukkan Kebutuhan Pinjaman (dalam juta):", min_value=1, max_value=1000, value=100)
-    suku_bunga = np.clip(0.1 + 0.005 * (1000 - skor_kredit) / 100, 0.05, 0.2)  # Rumus simulasi suku bunga
+        st.subheader("Credit Scores")
+        st.write("Credit scores of individuals and entities:")
+        st.dataframe(credit_scores)
 
-    # Output Simulasi
-    st.write(f"**Skor Kredit Pelanggan:** {skor_kredit}")
-    st.write(f"**Kebutuhan Pinjaman:** {kebutuhan_pinjaman} juta")
-    st.write(f"**Suku Bunga yang Ditawarkan:** {suku_bunga:.2%}")
+    elif page == "Transactions":
+        st.header("Transactions")
+        st.write("Transactions managed by agents:")
+        st.dataframe(transactions)
 
-    # Proses Transaksi
-    if st.button("Proses Transaksi"):
-        transaksi_sukses = np.random.choice([True, False], p=[0.85, 0.15])
-        if transaksi_sukses:
-            st.success("Transaksi berhasil diproses oleh agen koordinasi!")
+    elif page == "Simulation":
+        st.header("Simulation")
+
+        customer_id = st.text_input("Enter Customer ID", "C001")
+        st.write("Fetching data for customer:", customer_id)
+
+        # Filter data
+        customer_data = credit_scores[credit_scores['CustomerID'] == customer_id]
+
+        if not customer_data.empty:
+            st.write("Credit Score:", customer_data['CreditScore'].values[0])
+
+            # Simulate Loan Negotiation
+            st.subheader("Loan Negotiation")
+            amount = st.slider("Loan Amount", 1000, 100000, step=500)
+            credit_score = customer_data['CreditScore'].values[0]
+
+            # Calculate interest rate based on credit score
+            interest_rate = max(5 - (credit_score // 100), 1)
+            st.write("Proposed Interest Rate:", interest_rate, "%")
+
+            if st.button("Submit Loan Request"):
+                st.success("Loan request submitted with interest rate {}%".format(interest_rate))
         else:
-            st.error("Transaksi gagal. Silakan periksa kembali data atau hubungi pihak terkait.")
+            st.error("No data found for the specified customer ID.")
+
+if __name__ == "__main__":
+    main()
