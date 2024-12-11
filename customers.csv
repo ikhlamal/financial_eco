@@ -1,0 +1,6 @@
+Customer_ID,Name,Income,Age,Employment_Status
+1,Alice,50000,25,Employed
+2,Bob,40000,35,Employed
+3,Charlie,70000,45,Self-Employed
+4,Diana,30000,30,Unemployed
+5,Eve,60000,40,Employed

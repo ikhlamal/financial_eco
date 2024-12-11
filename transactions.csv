@@ -1,0 +1,6 @@
+Transaction_ID,Customer_ID,Amount,Transaction_Type,Status
+101,1,200,Payment,Pending
+102,2,1500,Loan,Pending
+103,3,500,Deposit,Pending
+104,4,2500,Withdrawal,Pending
+105,5,1000,Payment,Pending
