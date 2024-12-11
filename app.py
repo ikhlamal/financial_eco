@@ -87,7 +87,13 @@ def app():
     agent = next(agent for agent in agents if agent.agent_name == agent_name)
     
     # Input harga penawaran dan dana pembeli
-    initial_offer = st.number_input(f"Harga Penawaran dari {company_name}:", min_value=1000, max_value=100000, step=100, value=agent.initial_offer)
+    initial_offer = st.number_input(
+        f"Harga Penawaran dari {company_name}:",
+        min_value=1000.0,  # Menggunakan float
+        max_value=100000.0,  # Menggunakan float
+        step=100.0,  # Menggunakan float
+        value=float(agent.initial_offer)  # Konversi nilai awal ke float
+    )
     buyer_fund = st.number_input("Dana Pembeli:", min_value=1000, max_value=100000, step=100)
 
     # Inisialisasi agen untuk negosiasi
