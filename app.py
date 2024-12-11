@@ -1,120 +1,76 @@
 import streamlit as st
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.ext.declarative import declarative_base
+import pandas as pd
+import numpy as np
 
-# Inisialisasi database
-Base = declarative_base()
-engine = create_engine('sqlite:///financial_eco.db', echo=True)
+# Fungsi untuk memuat data
+@st.cache
+def load_data(file_name):
+    return pd.read_csv(file_name)
 
-# Definisikan tabel-tabel
-class Company(Base):
-    __tablename__ = 'companies'
-    company_id = Column(Integer, primary_key=True)
-    company_name = Column(String)
-    available_funds = Column(Float)
+# Header aplikasi
+st.title("Sistem Multiagen Cerdas dalam Ekosistem Keuangan Terintegrasi")
 
-class Agent(Base):
-    __tablename__ = 'agents'
-    agent_id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.company_id'))
-    agent_name = Column(String)
-    initial_offer = Column(Float)
+# Sidebar
+st.sidebar.header("Navigasi")
+menu = st.sidebar.selectbox("Pilih Menu", ["Home", "Data Agen", "Data Transaksi", "Simulasi Agen Cerdas"])
 
-    company = relationship("Company", back_populates="agents")
-
-Company.agents = relationship("Agent", order_by=Agent.agent_id, back_populates="company")
-
-class Transaction(Base):
-    __tablename__ = 'transactions'
-    transaction_id = Column(Integer, primary_key=True)
-    agent_id = Column(Integer, ForeignKey('agents.agent_id'))
-    buyer_fund = Column(Float)
-    agreed_price = Column(Float)
-    transaction_status = Column(String)
-
-    agent = relationship("Agent", back_populates="transactions")
-
-Agent.transactions = relationship("Transaction", order_by=Transaction.transaction_id, back_populates="agent")
-
-class FundUpdate(Base):
-    __tablename__ = 'fund_updates'
-    update_id = Column(Integer, primary_key=True)
-    company_id = Column(Integer, ForeignKey('companies.company_id'))
-    amount_used = Column(Float)
-    new_available_funds = Column(Float)
-
-# Buat tabel jika belum ada
-Base.metadata.create_all(engine)
-
-# Inisialisasi sesi untuk query database
-Session = sessionmaker(bind=engine)
-session = Session()
-
-# Kelas untuk agen negosiasi
-class NegotiationAgent:
-    def __init__(self, company_name, initial_offer, buyer_fund):
-        self.company_name = company_name
-        self.initial_offer = initial_offer
-        self.buyer_fund = buyer_fund
-        self.agreed_price = None
-
-    def negotiate(self):
-        if self.initial_offer > self.buyer_fund:
-            self.agreed_price = self.buyer_fund
-            return f"Negosiasi berhasil dengan {self.company_name}, harga disepakati: {self.agreed_price}"
-        else:
-            self.agreed_price = self.initial_offer
-            return f"Negosiasi berhasil dengan {self.company_name}, harga disepakati: {self.agreed_price}"
-
-# Streamlit UI
-def app():
-    st.title("Negosiasi Sistem Multiagen Cerdas - Ekosistem Keuangan Terintegrasi")
-
-    st.header("Masukkan Informasi Penawaran dan Dana Pembeli")
-    
-    # Ambil data perusahaan dari database
-    companies = session.query(Company).all()
-    company_names = [company.company_name for company in companies]
-    company_name = st.selectbox("Pilih Perusahaan Penyedia Layanan", company_names)
-    
-    # Ambil data agen berdasarkan perusahaan yang dipilih
-    company = session.query(Company).filter_by(company_name=company_name).first()
-    agents = session.query(Agent).filter_by(company_id=company.company_id).all()
-    agent_names = [agent.agent_name for agent in agents]
-    agent_name = st.selectbox("Pilih Agen", agent_names)
-    
-    agent = next(agent for agent in agents if agent.agent_name == agent_name)
-    
-    # Input harga penawaran dan dana pembeli
-    initial_offer = st.number_input(
-        f"Harga Penawaran dari {company_name}:",
-        min_value=1000.0,  # Menggunakan float
-        max_value=100000.0,  # Menggunakan float
-        step=100.0,  # Menggunakan float
-        value=float(agent.initial_offer)  # Konversi nilai awal ke float
+# Home Page
+if menu == "Home":
+    st.header("Selamat Datang!")
+    st.write(
+        """
+        Aplikasi ini mengilustrasikan bagaimana agen-agen cerdas bekerja dalam ekosistem keuangan yang terintegrasi. 
+        Setiap agen memiliki tugas spesifik, seperti menilai kredit, bernegosiasi pinjaman, dan mengelola transaksi keuangan.
+        """
     )
-    buyer_fund = st.number_input("Dana Pembeli:", min_value=1000, max_value=100000, step=100)
+    st.image("https://via.placeholder.com/800x400", caption="Arsitektur Sistem Multiagen")
 
-    # Inisialisasi agen untuk negosiasi
-    negotiation_agent = NegotiationAgent(company_name=company_name, initial_offer=initial_offer, buyer_fund=buyer_fund)
-    
-    # Menampilkan hasil negosiasi dan pembaruan dana perusahaan
-    if st.button('Mulai Negosiasi'):
-        negotiation_result = negotiation_agent.negotiate()
-        st.write(negotiation_result)
+# Data Agen Page
+elif menu == "Data Agen":
+    st.header("Data Agen Cerdas")
+    st.write("Berikut adalah daftar agen cerdas dalam sistem:")
+    data_agen = {
+        "Agen": ["Agen Penilaian Kredit", "Agen Negosiasi", "Agen Koordinasi Transaksi"],
+        "Fitur": [
+            "Menilai skor kredit pelanggan berdasarkan data historis.",
+            "Bernegosiasi suku bunga dan jumlah pinjaman.",
+            "Mengelola transaksi antar pihak."
+        ],
+        "Teknologi": ["Machine Learning", "Reinforcement Learning", "Blockchain"],
+    }
+    df_agen = pd.DataFrame(data_agen)
+    st.table(df_agen)
 
-        # Mengupdate dana perusahaan setelah transaksi
-        company.available_funds -= negotiation_agent.agreed_price
-        session.commit()
+# Data Transaksi Page
+elif menu == "Data Transaksi":
+    st.header("Data Transaksi Keuangan")
+    st.write("Berikut adalah data transaksi yang dikelola agen:")
+    uploaded_file = st.file_uploader("Upload File CSV Transaksi", type=["csv"])
+    if uploaded_file is not None:
+        data_transaksi = load_data(uploaded_file)
+        st.dataframe(data_transaksi)
+    else:
+        st.write("Silakan unggah file CSV untuk melihat data transaksi.")
 
-        # Tambah transaksi baru
-        transaction = Transaction(agent_id=agent.agent_id, buyer_fund=buyer_fund, agreed_price=negotiation_agent.agreed_price, transaction_status="completed")
-        session.add(transaction)
-        session.commit()
+# Simulasi Agen Cerdas Page
+elif menu == "Simulasi Agen Cerdas":
+    st.header("Simulasi Agen Cerdas")
+    st.write("Simulasi bagaimana agen-agen bekerja untuk menyelesaikan tugas mereka.")
 
-        st.write(f"Sisa dana di {company_name}: {company.available_funds}")
+    # Input Data Simulasi
+    skor_kredit = st.number_input("Masukkan Skor Kredit Pelanggan:", min_value=0, max_value=1000, value=750)
+    kebutuhan_pinjaman = st.number_input("Masukkan Kebutuhan Pinjaman (dalam juta):", min_value=1, max_value=1000, value=100)
+    suku_bunga = np.clip(0.1 + 0.005 * (1000 - skor_kredit) / 100, 0.05, 0.2)  # Rumus simulasi suku bunga
 
-# Menjalankan aplikasi
-if __name__ == "__main__":
-    app()
+    # Output Simulasi
+    st.write(f"**Skor Kredit Pelanggan:** {skor_kredit}")
+    st.write(f"**Kebutuhan Pinjaman:** {kebutuhan_pinjaman} juta")
+    st.write(f"**Suku Bunga yang Ditawarkan:** {suku_bunga:.2%}")
+
+    # Proses Transaksi
+    if st.button("Proses Transaksi"):
+        transaksi_sukses = np.random.choice([True, False], p=[0.85, 0.15])
+        if transaksi_sukses:
+            st.success("Transaksi berhasil diproses oleh agen koordinasi!")
+        else:
+            st.error("Transaksi gagal. Silakan periksa kembali data atau hubungi pihak terkait.")
